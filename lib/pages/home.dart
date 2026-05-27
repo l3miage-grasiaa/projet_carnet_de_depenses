@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:projet_carnet_de_depenses/pages/profile.dart';
+
+import '../models/user.dart';
 
 class MyHome extends StatelessWidget {
   const MyHome({super.key});
@@ -6,25 +9,28 @@ class MyHome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("TP1"),), // Parent utama halaman
-      body: Center( // Menengahkan isinya
-          child: Container( // Container sebagai "pembungkus" luar
-            margin: const EdgeInsets.all(20.0),
-            padding: const EdgeInsets.all(10.0), // Jarak antara bingkai dan isi
-            color: Colors.amber[100],
-
-            // Gunakan properti child (tunggal) untuk memasukkan Column
-            child: Column( // Menyusun vertikal
-              mainAxisSize: MainAxisSize.min, // // Agar column tidak menghabiskan seluruh layar
-              children: [
-                const Text(
-                    "Selamat tahun baru",
-                    style: TextStyle(fontWeight: FontWeight.bold),), // Widget anak 1
-                Image.asset('assets/happyNewYear.gif') // Widget anak 2
-              ],
-            ),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text("TP2"),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              var result = await Navigator
+                  .of(context)
+                  .push(MaterialPageRoute(builder:
+                  (context) => ProfilePage(user:
+                    User("Shinnosuke", "Nohara", "assets/shinchan_profil_image.jpeg")
+                  ),
+              ));
+              print(result);
+            },
+            icon: Icon(
+              Icons.account_circle,
+              size: 40,
+            )
           )
-      ),
+        ],
+      )
     );
   }
 }
