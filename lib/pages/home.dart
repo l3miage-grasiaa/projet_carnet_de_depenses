@@ -15,6 +15,7 @@ class MyHome extends StatelessWidget {
         title: Text("TP2"),
         actions: [
           IconButton(
+            // test Fase 1 (Manajemen Storage)
             onPressed: () async {
     // 1. Ambil instans kementerian penyimpanan Anda
     final storage = StorageService();
