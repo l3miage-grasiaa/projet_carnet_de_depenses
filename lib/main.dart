@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:localstorage/localstorage.dart';
 import 'package:projet_carnet_de_depenses/pages/home.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  initLocalStorage();
   runApp(const MyApp());
 }
 
