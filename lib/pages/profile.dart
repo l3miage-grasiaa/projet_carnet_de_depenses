@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/user.dart';
+import '../services/storage.dart';
 
 class ProfilePage extends StatelessWidget {
   final User user;
@@ -35,6 +36,14 @@ class ProfilePage extends StatelessWidget {
                 leading: const Icon(Icons.person),
                 title: Text("${user.firstName} ${user.lastName}"),
               ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red[100]),
+              onPressed: () {
+                StorageService().clearUser(); // 1. Hapus user dari storage lokal HP (Halaman 8)
+                Navigator.of(context).pop();  // 2. Pulang kembali ke halaman utama
+              },
+              child: const Text("Déconnexion (Logout)", style: TextStyle(color: Colors.red)),
             )
           ],
         ),
