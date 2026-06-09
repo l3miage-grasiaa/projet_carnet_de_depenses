@@ -47,71 +47,147 @@ class _MyHomeState extends State<MyHome> {
   void _openAddExpenseModal() {
     final titleController = TextEditingController();
     final amountController = TextEditingController();
-    String selectedCategory = 'Nourriture';
+
+    final List<String> categories = ['Nourriture', 'Transport', 'Courses', 'Divertissement', 'Santé', 'Loyer', 'Factures', 'Autres'];
+    String selectedCategory = 'Nourriture'; // catégory par défaut
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // Empêcher la fermeture du formulaire par le clavier HP
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            top: 16,
-            left: 16,
-            right: 16,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16, // Empêcher la fermeture de la disposition des goulots d'étranglement sur le clavier
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                "Ajouter une nouvelle dépense",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: "Intitulé des dépenses"),
-              ),
-              TextField(
-                controller: amountController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: "Somme (€)"),
-              ),
-              const SizedBox(height: 16),
+        // Utilisation de StatefulBuilder pour que les modifications apportées aux listes déroulantes à l'intérieur d'une fenêtre modale redémarrent immédiatement l'interface utilisateur de cette fenêtre.
+        return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setModalState) {
+              return Padding(
+                padding: EdgeInsets.only(
+                  top: 16,
+                  left: 16,
+                  right: 16,
+                  bottom: MediaQuery.of(ctx).viewInsets.bottom + 16, // Empêcher la fermeture de la disposition des goulots d'étranglement sur le clavier
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      "Ajouter une nouvelle dépense",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(labelText: "Intitulé des dépenses"),
+                    ),
+                    TextField(
+                      controller: amountController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(labelText: "Somme (€)"),
+                    ),
+                    const SizedBox(height: 16),
 
-              // Bouton Enregistrer et exécuter
-              ElevatedButton(
-                onPressed: () {
-                  final enteredTitle = titleController.text.trim();
-                  final enteredAmount = double.tryParse(amountController.text) ?? 0.0;
+                    // --- DROPDOWN CHOIX DE CATEGORIE  ---
+                    DropdownButtonFormField<String>(
+                      value: selectedCategory,
+                      items: categories.map((String cat) {
+                        return DropdownMenuItem<String>(
+                          value: cat,
+                          child: Text(cat),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        // Modifier l'état interne de la feuille modale
+                        setModalState(() {
+                          selectedCategory = newValue!;
+                        });
+                      },
+                      decoration: const InputDecoration(
+                        labelText: "Categorie",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
 
-                  if (enteredTitle.isEmpty || enteredAmount <= 0) return;
+                    // Bouton Enregistrer et exécuter
+                    ElevatedButton(
+                      onPressed: () {
+                        final enteredTitle = titleController.text.trim();
+                        final enteredAmount = double.tryParse(amountController.text) ?? 0.0;
 
-                  final newExpense = Expense(
-                    id: DateTime.now().toString(), // Identifiant unique utilisant un horodatage aléatoire
-                    title: enteredTitle,
-                    amount: enteredAmount,
-                    date: DateTime.now(),
-                    category: selectedCategory,
-                  );
+                        if (enteredTitle.isEmpty || enteredAmount <= 0) return;
 
-                  setState(() {
-                    _expenses.add(newExpense);
+                        final newExpense = Expense(
+                          id: DateTime.now().toString(),
+                          title: enteredTitle,
+                          amount: enteredAmount,
+                          date: DateTime.now(), // Identifiant unique utilisant un horodatage aléatoire
+                          category: selectedCategory, // Enregistre la catégorie sélectionnée par l'utilisateur
+                        );
 
-                    // Indiquez l'adresse e-mail de l'utilisateur actif actuel comme clé d'isolation des données
-                    _storage.saveExpenses(_currentUser!.email, _expenses); // Sauvegarde en temps réel et de façon permanente sur disque dur
-                  });
+                        setState(() {
+                          _expenses.add(newExpense);
 
-                  Navigator.of(ctx).pop(); // Fermer la feuille modale
-                },
-                child: const Text("Enregistrer les notes"),
-              ),
-            ],
-          ),
+                          // Indiquez l'adresse e-mail de l'utilisateur actif actuel comme clé d'isolation des données
+                          _storage.saveExpenses(_currentUser!.email, _expenses);
+                        });
+
+                        Navigator.of(ctx).pop(); // Fermer la feuille modale
+                      },
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
+                      child: const Text("Enregistrer les notes"),
+                    ),
+                  ],
+                ),
+              );
+            }
         );
       },
     );
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'Nourriture' :
+        return Icons.restaurant;
+      case 'Transport':
+        return Icons.directions_car;
+      case 'Courses':
+        return Icons.shopping_bag;
+      case 'Divertissement':
+        return Icons.local_movies;
+      case 'Santé':
+        return Icons.medical_services;
+      case 'Loyer':
+        return Icons.home_work;
+      case 'Factures electricite':
+        return Icons.electric_bolt;
+      case 'Factures eau':
+        return Icons.water_drop;
+      default:
+        return Icons.monetization_on;
+    }
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'Nourriture':
+        return Colors.orange;
+      case 'Transport':
+        return Colors.blue;
+      case 'Courses':
+        return Colors.purple;
+      case 'Divertissement':
+        return Colors.green;
+      case 'Santé':
+        return Colors.red;
+      case 'Loyer':
+        return Colors.brown;
+      case 'Factures electricite':
+        return Colors.amber;
+      case 'Factures eau':
+        return Colors.lightBlue;
+      default:
+        return Colors.deepPurple;
+    }
   }
 
   @override
@@ -183,9 +259,14 @@ class _MyHomeState extends State<MyHome> {
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                   child: ListTile(
-                    leading: const CircleAvatar(child: Icon(Icons.monetization_on)),
+                    // Utilisation d'icônes et de couleurs dynamiques en fonction des catégories de dépenses
+                    leading: CircleAvatar(
+                      backgroundColor: _getCategoryColor(item.category).withValues(alpha: 0.2),
+                      child: Icon(_getCategoryIcon(item.category), color: _getCategoryColor(item.category)),
+                    ),
                     title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text("${item.date.day}/${item.date.month}/${item.date.year}"),
+                    // Affiche les sous-titres sous forme de date et de catégorie
+                    subtitle: Text("${item.date.day}/${item.date.month}/${item.date.year} • ${item.category}"),
                     trailing: Text(
                       "- ${item.amount.toStringAsFixed(2)} €",
                       style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16),
