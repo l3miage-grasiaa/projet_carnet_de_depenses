@@ -40,8 +40,8 @@ class ProfilePage extends StatelessWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red[100]),
               onPressed: () {
-                StorageService().clearUser(); // 1. Hapus user dari storage lokal HP (Halaman 8)
-                Navigator.of(context).pop();  // 2. Pulang kembali ke halaman utama
+                StorageService().clearUser(); // 1. Supprimer l'utilisateur du stockage local HP
+                Navigator.of(context).pop();  // 2. Retour à la page principale
               },
               child: const Text("Déconnexion (Logout)", style: TextStyle(color: Colors.red)),
             )

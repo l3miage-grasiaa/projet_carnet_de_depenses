@@ -15,6 +15,7 @@ class StorageService {
   }
 
   void saveUser(User user) {
+    // Convertit un nouvel objet Utilisateur en une chaîne JSON.
     localStorage.setItem("cached_user", jsonEncode(user.toJson()));
   }
 
@@ -23,21 +24,21 @@ class StorageService {
     if (rawData == null) return null;
 
     try {
-      // 1. Lakukan decode teks mentah dari penyimpanan
+      // 1. Décoder le texte brut stocké
       final decoded = jsonDecode(rawData);
 
-      // 2. ANTISIPASI: Jika hasil decode ternyata masih berupa String (double-encoded)
+      // Si le résultat du décodage est toujours une chaîne de caractères (doublement encodée)
       if (decoded is String) {
         final Map<String, dynamic> actualMap = jsonDecode(decoded);
         return User.fromJson(actualMap);
       }
 
-      // 3. Jika hasil decode sudah benar berupa Map
+      // 3. Si le résultat du décodage est correct, il se présente sous la forme de Map.
       if (decoded is Map<String, dynamic>) {
         return User.fromJson(decoded);
       }
 
-      // Jika format tidak dikenali, amankan dengan return null
+      // Si le format n'est pas reconnu, renvoie null.
       return null;
     } catch (e) {
       print("Error saat membaca storage: $e");

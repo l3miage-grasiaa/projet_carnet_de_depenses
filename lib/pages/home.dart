@@ -18,26 +18,26 @@ class MyHome extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () async {
-              // 1. Cek apakah ada user yang sudah tersimpan di memori HP (Halaman 8)
+              // 1. Vérifiez si un utilisateur est déjà enregistré dans la mémoire du téléphone portable
               User? savedUser = storage.getUser();
 
               if (savedUser != null) {
-                // KONDISI A: User sudah ada -> Langsung ke Halaman Profil
+                // CONDITION A: L’utilisateur existe déjà -> Accéder directement à la page de profil
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => ProfilePage(user: savedUser),
                 ));
               } else {
-                // KONDISI B: Belum ada user -> Harus Login dulu ke internet
-                // Menunggu hasil kembalian dari LoginPage lewat Navigator.pop
+                // CONDITION B: Aucun utilisateur connecté -> Connexion Internet requise
+                // Attendre le résultat de LoginPage via Navigator.pop
                 var result = await Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => const LoginPage(),
                 ));
 
-                // Jika user sukses login dan membawa objek User kembali (Halaman 8)
+                // Si l'utilisateur se connecte avec succès et récupère l'objet Utilisateur
                 if (result != null && result is User) {
-                  storage.saveUser(result); // Simpan permanen ke storage lokal HP
+                  storage.saveUser(result); // Enregistrer sur le stockage local HP
 
-                  // Setelah sukses simpan, langsung antarkan ke halaman Profil
+                  // Après avoir enregistré le profil, accédez directement à la page de profil.
                   Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => ProfilePage(user: result),
                   ));
@@ -49,7 +49,7 @@ class MyHome extends StatelessWidget {
         ],
       ),
       body: const Center(
-        child: Text("Konten Utama Aplikasi"),
+        child: Text("Main content app"),
       ),
     );
   }
