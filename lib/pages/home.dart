@@ -16,11 +16,33 @@ class _MyHomeState extends State<MyHome> {
   final _storage = StorageService();
   List<Expense> _expenses = [];
   User? _currentUser;
+  String _activeFilter = 'Tous';
 
   @override
   void initState() {
     super.initState();
     _loadInitialData(); // Ouvre les données enregistrées lors de la première ouverture de l'application.
+  }
+
+  List<Expense> get _filteredExpenses {
+    final now = DateTime.now();
+
+    if (_activeFilter == 'Ce mois') {
+      // Filtrer les enregistrements dont l'année et le mois correspondent à aujourd'hui
+      return _expenses.where((expense) {
+        return expense.date.year == now.year && expense.date.month == now.month;
+      }).toList();
+    }
+
+    // Si le filtre est 'Tous', renvoyer la liste complète sans aucune troncature.
+    return _expenses;
+  }
+
+  double _getCategoryTotal(String category) {
+    // Calculer le montant total uniquement pour certaines catégories
+    return _filteredExpenses
+        .where((e) => e.category == category)
+        .fold(0.0, (sum, item) => sum + item.amount);
   }
 
   void _loadInitialData() {
@@ -40,7 +62,7 @@ class _MyHomeState extends State<MyHome> {
 
   // Fonction permettant de calculer le total des dépenses cumulées
   double get _totalSpending {
-    return _expenses.fold(0, (sum, item) => sum + item.amount);
+    return _filteredExpenses.fold(0, (sum, item) => sum + item.amount);
   }
 
   // Fonction permettant d'afficher un formulaire de saisie modal depuis le bas de l'écran (Feuille inférieure)
@@ -48,7 +70,7 @@ class _MyHomeState extends State<MyHome> {
     final titleController = TextEditingController();
     final amountController = TextEditingController();
 
-    final List<String> categories = ['Nourriture', 'Transport', 'Courses', 'Divertissement', 'Santé', 'Loyer', 'Factures', 'Autres'];
+    final List<String> categories = ['Nourriture', 'Transport', 'Courses', 'Divertissement', 'Santé', 'Loyer', 'Factures electricite', 'Factures eau', 'Autres'];
     String selectedCategory = 'Nourriture'; // catégory par défaut
 
     showModalBottomSheet(
@@ -248,6 +270,93 @@ class _MyHomeState extends State<MyHome> {
             ),
           ),
 
+          // BLOK STATISTIQUE PAR CATEGORIE
+          if (_filteredExpenses.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Card(
+                elevation: 0,
+                color: Colors.grey[50],
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(color: Colors.grey[200]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Statistiques par catégorie (allocation des fonds)",
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Render baris statistik untuk setiap kategori secara dinamis
+                      ...['Nourriture', 'Transport', 'Courses', 'Divertissement', 'Santé', 'Loyer', 'Factures electricite', 'Factures eau', 'Autres'].map((cat) {
+                        final double catTotal = _getCategoryTotal(cat);
+                        // Empêcher la division par zéro si le total des dépenses est encore vide
+                        final double percentage = _totalSpending > 0 ? catTotal / _totalSpending : 0.0;
+
+                        if (catTotal == 0) return const SizedBox.shrink(); // Masquer les catégories pour lesquelles aucune dépense n'a encore été enregistrée.
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(cat, style: const TextStyle(fontSize: 12)),
+                                  Text(
+                                    "${catTotal.toStringAsFixed(2)} € (${(percentage * 100).toStringAsFixed(2)}%)",
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              LinearProgressIndicator(
+                                value: percentage,
+                                backgroundColor: Colors.grey[200],
+                                color: _getCategoryColor(cat), // En utilisant les couleurs dynamiques que nous avons créées hier
+                                minHeight: 6,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+          // --- BOUTON FILTRE ---
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              children: [
+                FilterChip(
+                  label: const Text("Tous"),
+                  selected: _activeFilter == 'Tous',
+                  onSelected: (selected) {
+                    setState(() { _activeFilter = 'Tous'; });
+                  },
+                ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  label: const Text("Ce mois"),
+                  selected: _activeFilter == 'Ce mois',
+                  onSelected: (selected) {
+                    setState(() { _activeFilter = 'Ce mois'; });
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+
           // --- LISTE DE NOTES ---
           Expanded(
             child: _expenses.isEmpty
@@ -256,20 +365,57 @@ class _MyHomeState extends State<MyHome> {
               itemCount: _expenses.length,
               itemBuilder: (ctx, index) {
                 final item = _expenses[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: ListTile(
-                    // Utilisation d'icônes et de couleurs dynamiques en fonction des catégories de dépenses
-                    leading: CircleAvatar(
-                      backgroundColor: _getCategoryColor(item.category).withValues(alpha: 0.2),
-                      child: Icon(_getCategoryIcon(item.category), color: _getCategoryColor(item.category)),
-                    ),
-                    title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    // Affiche les sous-titres sous forme de date et de catégorie
-                    subtitle: Text("${item.date.day}/${item.date.month}/${item.date.year} • ${item.category}"),
-                    trailing: Text(
-                      "- ${item.amount.toStringAsFixed(2)} €",
-                      style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16),
+
+                // CARD AVEC DISMISSIBLE
+                return Dismissible(
+                  key: Key(item.id), // Une clé unique requise pour que Flutter sache quelle ligne décaler.
+                  direction: DismissDirection.endToStart, // Autoriser uniquement le balayage de droite à gauche
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20.0),
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+
+                  // SUPPRESSION DE LA FONCTION D'EXÉCUTION
+                  onDismissed: (direction) {
+                    // Ajouter un titre à la barre de notification avant de la supprimer
+                    final String deletedTitle = item.title;
+
+                    setState(() {
+                      // 1. Supprimer de la liste de la RAM interne
+                      _expenses.removeAt(index);
+
+                      // 2. Réécrire les modifications sur le stockage local HP en temps réel
+                      _storage.saveExpenses(_currentUser!.email, _expenses);
+                    });
+
+                    // Afficher un petit message visuel en bas de l'écran indiquant que les données ont été supprimées.
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Dépense '$deletedTitle' a bien été supprimée"),
+                        backgroundColor: Colors.black87,
+                      ),
+                    );
+                  },
+
+                  // REMPLISSEZ LE CONTENU PRINCIPAL DE LA CARTE
+                  child: Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: ListTile(
+                      // Utilisation d'icônes et de couleurs dynamiques en fonction des catégories de dépenses
+                      leading: CircleAvatar(
+                        backgroundColor: _getCategoryColor(item.category).withValues(alpha: 0.2),
+                        child: Icon(_getCategoryIcon(item.category), color: _getCategoryColor(item.category)),
+                      ),
+                      title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      // Affiche les sous-titres sous forme de date et de catégorie
+                      subtitle: Text("${item.date.day}/${item.date.month}/${item.date.year} • ${item.category}"),
+                      trailing: Text(
+                        "- ${item.amount.toStringAsFixed(2)} €",
+                        style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
                     ),
                   ),
                 );
