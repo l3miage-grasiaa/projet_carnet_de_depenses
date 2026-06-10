@@ -399,10 +399,11 @@ class _MyHomeState extends State<MyHome> {
                   onDismissed: (direction) {
                     // Ajouter un titre à la barre de notification avant de la supprimer
                     final String deletedTitle = item.title;
+                    final String deletedId = item.id; // Amankan ID unik sebelum dihapus
 
                     setState(() {
                       // 1. Supprimer de la liste de la RAM interne
-                      _expenses.removeAt(index);
+                      _expenses.removeWhere((expense) => expense.id == deletedId);
 
                       // 2. Réécrire les modifications sur le stockage local HP en temps réel
                       _storage.saveExpenses(_currentUser!.email, _expenses);
