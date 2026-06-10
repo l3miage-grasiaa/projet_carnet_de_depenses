@@ -16,7 +16,7 @@ class _MyHomeState extends State<MyHome> {
   final _storage = StorageService();
   List<Expense> _expenses = [];
   User? _currentUser;
-  String _activeFilter = 'Tous';
+  String _activeFilter = 'Aujourd\'hui';
 
   @override
   void initState() {
@@ -26,6 +26,14 @@ class _MyHomeState extends State<MyHome> {
 
   List<Expense> get _filteredExpenses {
     final now = DateTime.now();
+
+    if (_activeFilter == 'Aujourd\'hui') {
+      return _expenses.where((expense) {
+        return expense.date.year == now.year &&
+            expense.date.month == now.month &&
+            expense.date.day == now.day;
+      }).toList();
+    }
 
     if (_activeFilter == 'Ce mois') {
       // Filtrer les enregistrements dont l'année et le mois correspondent à aujourd'hui
@@ -337,6 +345,7 @@ class _MyHomeState extends State<MyHome> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               children: [
+                const SizedBox(width: 8),
                 FilterChip(
                   label: const Text("Tous"),
                   selected: _activeFilter == 'Tous',
@@ -352,6 +361,14 @@ class _MyHomeState extends State<MyHome> {
                     setState(() { _activeFilter = 'Ce mois'; });
                   },
                 ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  label: const Text("Aujourd\'hui"),
+                  selected: _activeFilter == 'Aujourd\'hui',
+                  onSelected: (selected) {
+                    setState(() { _activeFilter = 'Aujourd\'hui'; });
+                  },
+                ),
               ],
             ),
           ),
@@ -359,12 +376,12 @@ class _MyHomeState extends State<MyHome> {
 
           // --- LISTE DE NOTES ---
           Expanded(
-            child: _expenses.isEmpty
+            child: _filteredExpenses.isEmpty  // Point 1 : Cette condition est vide ou non
                 ? const Center(child: Text("Aucune dépense n'est enregistrée pour le moment. Cliquez sur le bouton +"))
                 : ListView.builder(
-              itemCount: _expenses.length,
+              itemCount: _filteredExpenses.length,  // Point 2: Limiter le nombre de lignes selon le filtre
               itemBuilder: (ctx, index) {
-                final item = _expenses[index];
+                final item = _filteredExpenses[index];  // Point 3: Récupérer les données de dépenses à partir de la liste de filtres
 
                 // CARD AVEC DISMISSIBLE
                 return Dismissible(
